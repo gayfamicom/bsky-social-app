@@ -27,6 +27,9 @@ export const atoms = {
   relative: {
     position: 'relative',
   },
+  static: {
+    position: 'static',
+  },
   sticky: web({
     position: 'sticky',
   }),
@@ -64,6 +67,9 @@ export const atoms = {
     zIndex: 50,
   },
 
+  overflow_visible: {
+    overflow: 'visible',
+  },
   overflow_hidden: {
     overflow: 'hidden',
   },
@@ -203,6 +209,9 @@ export const atoms = {
   },
   flex_grow: {
     flexGrow: 1,
+  },
+  flex_grow_0: {
+    flexGrow: 0,
   },
   flex_shrink: {
     flexShrink: 1,
@@ -977,6 +986,10 @@ export const atoms = {
   transition_none: web({
     transitionProperty: 'none',
   }),
+  transition_timing_default: web({
+    transitionTimingFunction: 'cubic-bezier(0.17, 0.73, 0.14, 1)',
+    transitionDuration: '100ms',
+  }),
   transition_all: web({
     transitionProperty: 'all',
     transitionTimingFunction: 'cubic-bezier(0.17, 0.73, 0.14, 1)',
@@ -1045,4 +1058,8 @@ export const atoms = {
       transform: [],
     },
   }) as {transform: Exclude<ViewStyle['transform'], string | undefined>},
+
+  pointer: web({
+    cursor: 'pointer',
+  }),
 } as const

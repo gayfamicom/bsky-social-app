@@ -31,6 +31,7 @@ export const DISCOVER_DEBUG_DIDS: Record<string, true> = {
   'did:plc:3jpt2mvvsumj2r7eqk4gzzjz': true, // esb.lol
   'did:plc:vjug55kidv6sye7ykr5faxxn': true, // emilyliu.me
   'did:plc:tgqseeot47ymot4zro244fj3': true, // iwsmith.bsky.social
+  'did:plc:2dzyut5lxna5ljiaasgeuffz': true, // mrnuma.bsky.social
 }
 
 const BASE_FEEDBACK_FORM_URL = `${HELP_DESK_URL}/requests/new`
@@ -200,3 +201,9 @@ export const urls = {
     },
   },
 }
+
+export const PUBLIC_APPVIEW = 'https://api.bsky.app'
+export const PUBLIC_APPVIEW_DID = 'did:web:api.bsky.app'
+export const PUBLIC_STAGING_APPVIEW_DID = 'did:web:api.staging.bsky.dev'
+
+export const DEV_ENV_APPVIEW = `http://localhost:2584` // always the same

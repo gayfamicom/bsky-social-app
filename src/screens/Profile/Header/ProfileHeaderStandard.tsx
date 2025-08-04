@@ -9,13 +9,12 @@ import {
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
+import {useActorStatus} from '#/lib/actor-status'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {logger} from '#/logger'
-import {isIOS, isWeb} from '#/platform/detection'
+import {isIOS} from '#/platform/detection'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
-import {type Shadow} from '#/state/cache/types'
-import {useModalControls} from '#/state/modals'
 import {
   useProfileBlockMutationQueue,
   useProfileFollowMutationQueue,
@@ -24,6 +23,7 @@ import {useRequireAuth, useSession} from '#/state/session'
 import {ProfileMenu} from '#/view/com/profile/ProfileMenu'
 import * as Toast from '#/view/com/util/Toast'
 import {atoms as a, platform, useBreakpoints, useTheme} from '#/alf'
+import {SubscribeProfileButton} from '#/components/activity-notifications/SubscribeProfileButton'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
 import {useDialogControl} from '#/components/Dialog'
 import {MessageProfileButton} from '#/components/dms/MessageProfileButton'
@@ -58,8 +58,8 @@ let ProfileHeaderStandard = ({
 }: Props): React.ReactNode => {
   const t = useTheme()
   const {gtMobile} = useBreakpoints()
-  const profile: Shadow<AppBskyActorDefs.ProfileViewDetailed> =
-    useProfileShadow(profileUnshadowed)
+  const profile =
+    useProfileShadow<AppBskyActorDefs.ProfileViewDetailed>(profileUnshadowed)
   const {currentAccount, hasSession} = useSession()
   const {_} = useLingui()
   const moderation = useMemo(
@@ -78,19 +78,7 @@ let ProfileHeaderStandard = ({
     profile.viewer?.blockedBy ||
     profile.viewer?.blockingByList
 
-  const {openModal} = useModalControls()
   const editProfileControl = useDialogControl()
-  const onPressEditProfile = React.useCallback(() => {
-    if (isWeb) {
-      // temp, while we figure out the nested dialog bug
-      openModal({
-        name: 'edit-profile',
-        profile,
-      })
-    } else {
-      editProfileControl.open()
-    }
-  }, [editProfileControl, openModal, profile])
 
   const onPressFollow = () => {
     requireAuth(async () => {
@@ -146,10 +134,25 @@ let ProfileHeaderStandard = ({
     }
   }, [_, queueUnblock])
 
-  const isMe = React.useMemo(
+  const isMe = useMemo(
     () => currentAccount?.did === profile.did,
     [currentAccount, profile],
   )
+
+  const {isActive: live} = useActorStatus(profile)
+
+  const subscriptionsAllowed = useMemo(() => {
+    switch (profile.associated?.activitySubscription?.allowSubscriptions) {
+      case 'followers':
+      case undefined:
+        return !!profile.viewer?.following
+      case 'mutuals':
+        return !!profile.viewer?.following && !!profile.viewer.followedBy
+      case 'none':
+      default:
+        return false
+    }
+  }, [profile])
 
   return (
     <ProfileHeaderShell
@@ -178,7 +181,7 @@ let ProfileHeaderStandard = ({
                 size="small"
                 color="secondary"
                 variant="solid"
-                onPress={onPressEditProfile}
+                onPress={editProfileControl.open}
                 label={_(msg`Edit profile`)}
                 style={[a.rounded_full]}>
                 <ButtonText>
@@ -208,6 +211,12 @@ let ProfileHeaderStandard = ({
             )
           ) : !profile.viewer?.blockedBy ? (
             <>
+              {hasSession && subscriptionsAllowed && (
+                <SubscribeProfileButton
+                  profile={profile}
+                  moderationOpts={moderationOpts}
+                />
+              )}
               {hasSession && <MessageProfileButton profile={profile} />}
 
               <Button
@@ -241,7 +250,8 @@ let ProfileHeaderStandard = ({
           ) : null}
           <ProfileMenu profile={profile} />
         </View>
-        <View style={[a.flex_col, a.gap_2xs, a.pt_2xs, a.pb_sm]}>
+        <View
+          style={[a.flex_col, a.gap_xs, a.pb_sm, live ? a.pt_sm : a.pt_2xs]}>
           <View style={[a.flex_row, a.align_center, a.gap_xs, a.flex_1]}>
             <Text
               emoji
@@ -251,6 +261,7 @@ let ProfileHeaderStandard = ({
                 gtMobile ? a.text_4xl : a.text_3xl,
                 a.self_start,
                 a.font_heavy,
+                a.leading_tight,
               ]}>
               {sanitizeDisplayName(
                 profile.displayName || sanitizeHandle(profile.handle),

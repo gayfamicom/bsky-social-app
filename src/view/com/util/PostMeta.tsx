@@ -6,6 +6,7 @@ import {useLingui} from '@lingui/react'
 import {useQueryClient} from '@tanstack/react-query'
 import type React from 'react'
 
+import {useActorStatus} from '#/lib/actor-status'
 import {makeProfileLink} from '#/lib/routes/links'
 import {forceLTR} from '#/lib/strings/bidi'
 import {NON_BREAKING_SPACE} from '#/lib/strings/constants'
@@ -55,6 +56,7 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
 
   const timestampLabel = niceDate(i18n, opts.timestamp)
   const verification = useSimpleVerificationState({profile: author})
+  const {isActive: live} = useActorStatus(author)
 
   return (
     <View
@@ -74,11 +76,13 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
             profile={author}
             moderation={opts.moderation?.ui('avatar')}
             type={author.associated?.labeler ? 'labeler' : 'user'}
+            live={live}
+            hideLiveBadge
           />
         </View>
       )}
       <View style={[a.flex_row, a.align_end, a.flex_shrink]}>
-        <ProfileHoverCard inline did={author.did}>
+        <ProfileHoverCard did={author.did}>
           <View style={[a.flex_row, a.align_end, a.flex_shrink]}>
             <WebOnlyInlineLinkText
               emoji
@@ -92,7 +96,8 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
                 a.font_bold,
                 t.atoms.text,
                 a.leading_tight,
-                {maxWidth: '70%', flexShrink: 0},
+                a.flex_shrink_0,
+                {maxWidth: '70%'},
               ]}>
               {forceLTR(
                 sanitizeDisplayName(
@@ -117,6 +122,7 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
               </View>
             )}
             <WebOnlyInlineLinkText
+              emoji
               numberOfLines={1}
               to={profileLink}
               label={_(msg`View profile`)}

@@ -10,11 +10,9 @@ import {createCustomBackdrop} from '../util/BottomSheetCustomBackdrop'
 import * as ChangePasswordModal from './ChangePassword'
 import * as CreateOrEditListModal from './CreateOrEditList'
 import * as DeleteAccountModal from './DeleteAccount'
-import * as EditProfileModal from './EditProfile'
 import * as InviteCodesModal from './InviteCodes'
 import * as ContentLanguagesSettingsModal from './lang-settings/ContentLanguagesSettings'
 import * as PostLanguagesSettingsModal from './lang-settings/PostLanguagesSettings'
-import * as LinkWarningModal from './LinkWarning'
 import * as UserAddRemoveListsModal from './UserAddRemoveLists'
 
 const DEFAULT_SNAPPOINTS = ['90%']
@@ -48,10 +46,7 @@ export function ModalsContainer() {
 
   let snapPoints: (string | number)[] = DEFAULT_SNAPPOINTS
   let element
-  if (activeModal?.name === 'edit-profile') {
-    snapPoints = EditProfileModal.snapPoints
-    element = <EditProfileModal.Component {...activeModal} />
-  } else if (activeModal?.name === 'create-or-edit-list') {
+  if (activeModal?.name === 'create-or-edit-list') {
     snapPoints = CreateOrEditListModal.snapPoints
     element = <CreateOrEditListModal.Component {...activeModal} />
   } else if (activeModal?.name === 'user-add-remove-lists') {
@@ -72,9 +67,6 @@ export function ModalsContainer() {
   } else if (activeModal?.name === 'change-password') {
     snapPoints = ChangePasswordModal.snapPoints
     element = <ChangePasswordModal.Component />
-  } else if (activeModal?.name === 'link-warning') {
-    snapPoints = LinkWarningModal.snapPoints
-    element = <LinkWarningModal.Component {...activeModal} />
   } else {
     return null
   }

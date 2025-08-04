@@ -25,7 +25,10 @@ import {ModalsContainer} from '#/view/com/modals/Modal'
 import {ErrorBoundary} from '#/view/com/util/ErrorBoundary'
 import {atoms as a, select, useTheme} from '#/alf'
 import {setSystemUITheme} from '#/alf/util/systemUI'
+import {AgeAssuranceRedirectDialog} from '#/components/ageAssurance/AgeAssuranceRedirectDialog'
+import {EmailDialog} from '#/components/dialogs/EmailDialog'
 import {InAppBrowserConsentDialog} from '#/components/dialogs/InAppBrowserConsent'
+import {LinkWarningDialog} from '#/components/dialogs/LinkWarning'
 import {MutedWordsDialog} from '#/components/dialogs/MutedWords'
 import {SigninDialog} from '#/components/dialogs/Signin'
 import {Outlet as PortalOutlet} from '#/components/Portal'
@@ -152,7 +155,10 @@ function ShellInner() {
       <ModalsContainer />
       <MutedWordsDialog />
       <SigninDialog />
+      <EmailDialog />
+      <AgeAssuranceRedirectDialog />
       <InAppBrowserConsentDialog />
+      <LinkWarningDialog />
       <Lightbox />
       <PortalOutlet />
       <BottomSheetOutlet />

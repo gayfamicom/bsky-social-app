@@ -14,30 +14,36 @@ import {
   View,
   type ViewStyle,
 } from 'react-native'
-import {LinearGradient} from 'expo-linear-gradient'
 
-import {atoms as a, flatten, select, tokens, useTheme} from '#/alf'
+import {atoms as a, flatten, select, useTheme} from '#/alf'
 import {type Props as SVGIconProps} from '#/components/icons/common'
 import {Text} from '#/components/Typography'
 
-export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'gradient'
+/**
+ * The `Button` component, and some extensions of it like `Link` are intended
+ * to be generic and therefore apply no styles by default. These `VariantProps`
+ * are what control the `Button`'s presentation, and are intended only use cases where the buttons appear as, well, buttons.
+ *
+ * If `Button` or an extension of it are used for other compound components, use this property to avoid misuse of these variant props further down the line.
+ *
+ * @example
+ * type MyComponentProps = Omit<ButtonProps, UninheritableButtonProps> & {...}
+ */
+export type UninheritableButtonProps = 'variant' | 'color' | 'size' | 'shape'
+
+export type ButtonVariant = 'solid' | 'outline' | 'ghost'
 export type ButtonColor =
   | 'primary'
   | 'secondary'
   | 'secondary_inverted'
   | 'negative'
-  | 'gradient_primary'
-  | 'gradient_sky'
-  | 'gradient_midnight'
-  | 'gradient_sunrise'
-  | 'gradient_sunset'
-  | 'gradient_nordic'
-  | 'gradient_bonfire'
+  | 'negative_secondary'
 export type ButtonSize = 'tiny' | 'small' | 'large'
 export type ButtonShape = 'round' | 'square' | 'default'
 export type VariantProps = {
   /**
    * The style variation of the button
+   * @deprecated Use `color` instead.
    */
   variant?: ButtonVariant
   /**
@@ -130,6 +136,15 @@ export const Button = React.forwardRef<View, ButtonProps>(
     },
     ref,
   ) => {
+    /**
+     * The `variant` prop is deprecated in favor of simply specifying `color`.
+     * If a `color` is set, then we want to use the existing codepaths for
+     * "solid" buttons. This is to maintain backwards compatibility.
+     */
+    if (!variant && color) {
+      variant = 'solid'
+    }
+
     const t = useTheme()
     const [state, setState] = React.useState({
       pressed: false,
@@ -202,8 +217,13 @@ export const Button = React.forwardRef<View, ButtonProps>(
       const baseStyles: ViewStyle[] = []
       const hoverStyles: ViewStyle[] = []
 
-      if (color === 'primary') {
-        if (variant === 'solid') {
+      /*
+       * This is the happy path for new button styles, following the
+       * deprecation of `variant` prop. This redundant `variant` check is here
+       * just to make this handling easier to understand.
+       */
+      if (variant === 'solid') {
+        if (color === 'primary') {
           if (!disabled) {
             baseStyles.push({
               backgroundColor: t.palette.primary_500,
@@ -220,64 +240,14 @@ export const Button = React.forwardRef<View, ButtonProps>(
               }),
             })
           }
-        } else if (variant === 'outline') {
-          baseStyles.push(a.border, t.atoms.bg, {
-            borderWidth: 1,
-          })
-
-          if (!disabled) {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.primary_500,
-            })
-            hoverStyles.push(a.border, {
-              backgroundColor: t.palette.primary_50,
-            })
-          } else {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.primary_200,
-            })
-          }
-        } else if (variant === 'ghost') {
-          if (!disabled) {
-            baseStyles.push(t.atoms.bg)
-            hoverStyles.push({
-              backgroundColor: t.palette.primary_100,
-            })
-          }
-        }
-      } else if (color === 'secondary') {
-        if (variant === 'solid') {
+        } else if (color === 'secondary') {
           if (!disabled) {
             baseStyles.push(t.atoms.bg_contrast_25)
             hoverStyles.push(t.atoms.bg_contrast_50)
           } else {
             baseStyles.push(t.atoms.bg_contrast_100)
           }
-        } else if (variant === 'outline') {
-          baseStyles.push(a.border, t.atoms.bg, {
-            borderWidth: 1,
-          })
-
-          if (!disabled) {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.contrast_300,
-            })
-            hoverStyles.push(t.atoms.bg_contrast_50)
-          } else {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.contrast_200,
-            })
-          }
-        } else if (variant === 'ghost') {
-          if (!disabled) {
-            baseStyles.push(t.atoms.bg)
-            hoverStyles.push({
-              backgroundColor: t.palette.contrast_25,
-            })
-          }
-        }
-      } else if (color === 'secondary_inverted') {
-        if (variant === 'solid') {
+        } else if (color === 'secondary_inverted') {
           if (!disabled) {
             baseStyles.push({
               backgroundColor: t.palette.contrast_900,
@@ -290,31 +260,7 @@ export const Button = React.forwardRef<View, ButtonProps>(
               backgroundColor: t.palette.contrast_600,
             })
           }
-        } else if (variant === 'outline') {
-          baseStyles.push(a.border, t.atoms.bg, {
-            borderWidth: 1,
-          })
-
-          if (!disabled) {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.contrast_300,
-            })
-            hoverStyles.push(t.atoms.bg_contrast_50)
-          } else {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.contrast_200,
-            })
-          }
-        } else if (variant === 'ghost') {
-          if (!disabled) {
-            baseStyles.push(t.atoms.bg)
-            hoverStyles.push({
-              backgroundColor: t.palette.contrast_25,
-            })
-          }
-        }
-      } else if (color === 'negative') {
-        if (variant === 'solid') {
+        } else if (color === 'negative') {
           if (!disabled) {
             baseStyles.push({
               backgroundColor: t.palette.negative_500,
@@ -331,31 +277,166 @@ export const Button = React.forwardRef<View, ButtonProps>(
               }),
             })
           }
-        } else if (variant === 'outline') {
-          baseStyles.push(a.border, t.atoms.bg, {
-            borderWidth: 1,
-          })
-
+        } else if (color === 'negative_secondary') {
           if (!disabled) {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.negative_500,
+            baseStyles.push({
+              backgroundColor: select(t.name, {
+                light: t.palette.negative_50,
+                dim: t.palette.negative_100,
+                dark: t.palette.negative_100,
+              }),
             })
-            hoverStyles.push(a.border, {
-              backgroundColor: t.palette.negative_50,
+            hoverStyles.push({
+              backgroundColor: select(t.name, {
+                light: t.palette.negative_100,
+                dim: t.palette.negative_200,
+                dark: t.palette.negative_200,
+              }),
             })
           } else {
-            baseStyles.push(a.border, {
-              borderColor: t.palette.negative_200,
-            })
-          }
-        } else if (variant === 'ghost') {
-          if (!disabled) {
-            baseStyles.push(t.atoms.bg)
-            hoverStyles.push({
-              backgroundColor: t.palette.negative_100,
+            baseStyles.push({
+              backgroundColor: select(t.name, {
+                light: t.palette.negative_100,
+                dim: t.palette.negative_50,
+                dark: t.palette.negative_50,
+              }),
             })
           }
         }
+      } else {
+        /*
+         * BEGIN DEPRECATED STYLES
+         */
+        if (color === 'primary') {
+          if (variant === 'outline') {
+            baseStyles.push(a.border, t.atoms.bg, {
+              borderWidth: 1,
+            })
+
+            if (!disabled) {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.primary_500,
+              })
+              hoverStyles.push(a.border, {
+                backgroundColor: t.palette.primary_50,
+              })
+            } else {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.primary_200,
+              })
+            }
+          } else if (variant === 'ghost') {
+            if (!disabled) {
+              baseStyles.push(t.atoms.bg)
+              hoverStyles.push({
+                backgroundColor: t.palette.primary_100,
+              })
+            }
+          }
+        } else if (color === 'secondary') {
+          if (variant === 'outline') {
+            baseStyles.push(a.border, t.atoms.bg, {
+              borderWidth: 1,
+            })
+
+            if (!disabled) {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.contrast_300,
+              })
+              hoverStyles.push(t.atoms.bg_contrast_50)
+            } else {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.contrast_200,
+              })
+            }
+          } else if (variant === 'ghost') {
+            if (!disabled) {
+              baseStyles.push(t.atoms.bg)
+              hoverStyles.push({
+                backgroundColor: t.palette.contrast_25,
+              })
+            }
+          }
+        } else if (color === 'secondary_inverted') {
+          if (variant === 'outline') {
+            baseStyles.push(a.border, t.atoms.bg, {
+              borderWidth: 1,
+            })
+
+            if (!disabled) {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.contrast_300,
+              })
+              hoverStyles.push(t.atoms.bg_contrast_50)
+            } else {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.contrast_200,
+              })
+            }
+          } else if (variant === 'ghost') {
+            if (!disabled) {
+              baseStyles.push(t.atoms.bg)
+              hoverStyles.push({
+                backgroundColor: t.palette.contrast_25,
+              })
+            }
+          }
+        } else if (color === 'negative') {
+          if (variant === 'outline') {
+            baseStyles.push(a.border, t.atoms.bg, {
+              borderWidth: 1,
+            })
+
+            if (!disabled) {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.negative_500,
+              })
+              hoverStyles.push(a.border, {
+                backgroundColor: t.palette.negative_50,
+              })
+            } else {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.negative_200,
+              })
+            }
+          } else if (variant === 'ghost') {
+            if (!disabled) {
+              baseStyles.push(t.atoms.bg)
+              hoverStyles.push({
+                backgroundColor: t.palette.negative_100,
+              })
+            }
+          }
+        } else if (color === 'negative_secondary') {
+          if (variant === 'outline') {
+            baseStyles.push(a.border, t.atoms.bg, {
+              borderWidth: 1,
+            })
+
+            if (!disabled) {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.negative_500,
+              })
+              hoverStyles.push(a.border, {
+                backgroundColor: t.palette.negative_50,
+              })
+            } else {
+              baseStyles.push(a.border, {
+                borderColor: t.palette.negative_200,
+              })
+            }
+          } else if (variant === 'ghost') {
+            if (!disabled) {
+              baseStyles.push(t.atoms.bg)
+              hoverStyles.push({
+                backgroundColor: t.palette.negative_100,
+              })
+            }
+          }
+        }
+        /*
+         * END DEPRECATED STYLES
+         */
       }
 
       if (shape === 'default') {
@@ -419,48 +500,6 @@ export const Button = React.forwardRef<View, ButtonProps>(
       }
     }, [t, variant, color, size, shape, disabled])
 
-    const gradientValues = React.useMemo(() => {
-      const gradient = {
-        primary: tokens.gradients.sky,
-        secondary: tokens.gradients.sky,
-        secondary_inverted: tokens.gradients.sky,
-        negative: tokens.gradients.sky,
-        gradient_primary: tokens.gradients.primary,
-        gradient_sky: tokens.gradients.sky,
-        gradient_midnight: tokens.gradients.midnight,
-        gradient_sunrise: tokens.gradients.sunrise,
-        gradient_sunset: tokens.gradients.sunset,
-        gradient_nordic: tokens.gradients.nordic,
-        gradient_bonfire: tokens.gradients.bonfire,
-      }[color || 'primary']
-
-      if (variant === 'gradient') {
-        if (gradient.values.length < 2) {
-          throw new Error(
-            'Gradient buttons must have at least two colors in the gradient',
-          )
-        }
-
-        return {
-          colors: gradient.values.map(([_, color]) => color) as [
-            string,
-            string,
-            ...string[],
-          ],
-          hoverColors: gradient.values.map(_ => gradient.hover_value) as [
-            string,
-            string,
-            ...string[],
-          ],
-          locations: gradient.values.map(([location, _]) => location) as [
-            number,
-            number,
-            ...number[],
-          ],
-        }
-      }
-    }, [variant, color])
-
     const context = React.useMemo<ButtonContext>(
       () => ({
         ...state,
@@ -503,27 +542,6 @@ export const Button = React.forwardRef<View, ButtonProps>(
         onHoverOut={onHoverOut}
         onFocus={onFocus}
         onBlur={onBlur}>
-        {variant === 'gradient' && gradientValues && (
-          <View
-            style={[
-              a.absolute,
-              a.inset_0,
-              a.overflow_hidden,
-              {borderRadius: flattenedBaseStyles.borderRadius},
-            ]}>
-            <LinearGradient
-              colors={
-                state.hovered || state.pressed
-                  ? gradientValues.hoverColors
-                  : gradientValues.colors
-              }
-              locations={gradientValues.locations}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 1}}
-              style={[a.absolute, a.inset_0]}
-            />
-          </View>
-        )}
         <Context.Provider value={context}>
           {typeof children === 'function' ? children(context) : children}
         </Context.Provider>
@@ -539,30 +557,19 @@ export function useSharedButtonTextStyles() {
   return React.useMemo(() => {
     const baseStyles: TextStyle[] = []
 
-    if (color === 'primary') {
-      if (variant === 'solid') {
+    /*
+     * This is the happy path for new button styles, following the
+     * deprecation of `variant` prop. This redundant `variant` check is here
+     * just to make this handling easier to understand.
+     */
+    if (variant === 'solid') {
+      if (color === 'primary') {
         if (!disabled) {
           baseStyles.push({color: t.palette.white})
         } else {
           baseStyles.push({color: t.palette.white, opacity: 0.5})
         }
-      } else if (variant === 'outline') {
-        if (!disabled) {
-          baseStyles.push({
-            color: t.palette.primary_600,
-          })
-        } else {
-          baseStyles.push({color: t.palette.primary_600, opacity: 0.5})
-        }
-      } else if (variant === 'ghost') {
-        if (!disabled) {
-          baseStyles.push({color: t.palette.primary_600})
-        } else {
-          baseStyles.push({color: t.palette.primary_600, opacity: 0.5})
-        }
-      }
-    } else if (color === 'secondary') {
-      if (variant === 'solid' || variant === 'gradient') {
+      } else if (color === 'secondary') {
         if (!disabled) {
           baseStyles.push({
             color: t.palette.contrast_700,
@@ -572,29 +579,7 @@ export function useSharedButtonTextStyles() {
             color: t.palette.contrast_400,
           })
         }
-      } else if (variant === 'outline') {
-        if (!disabled) {
-          baseStyles.push({
-            color: t.palette.contrast_600,
-          })
-        } else {
-          baseStyles.push({
-            color: t.palette.contrast_300,
-          })
-        }
-      } else if (variant === 'ghost') {
-        if (!disabled) {
-          baseStyles.push({
-            color: t.palette.contrast_600,
-          })
-        } else {
-          baseStyles.push({
-            color: t.palette.contrast_300,
-          })
-        }
-      }
-    } else if (color === 'secondary_inverted') {
-      if (variant === 'solid' || variant === 'gradient') {
+      } else if (color === 'secondary_inverted') {
         if (!disabled) {
           baseStyles.push({
             color: t.palette.contrast_50,
@@ -604,53 +589,128 @@ export function useSharedButtonTextStyles() {
             color: t.palette.contrast_400,
           })
         }
-      } else if (variant === 'outline') {
-        if (!disabled) {
-          baseStyles.push({
-            color: t.palette.contrast_600,
-          })
-        } else {
-          baseStyles.push({
-            color: t.palette.contrast_300,
-          })
-        }
-      } else if (variant === 'ghost') {
-        if (!disabled) {
-          baseStyles.push({
-            color: t.palette.contrast_600,
-          })
-        } else {
-          baseStyles.push({
-            color: t.palette.contrast_300,
-          })
-        }
-      }
-    } else if (color === 'negative') {
-      if (variant === 'solid' || variant === 'gradient') {
+      } else if (color === 'negative') {
         if (!disabled) {
           baseStyles.push({color: t.palette.white})
         } else {
           baseStyles.push({color: t.palette.white, opacity: 0.5})
         }
-      } else if (variant === 'outline') {
+      } else if (color === 'negative_secondary') {
         if (!disabled) {
-          baseStyles.push({color: t.palette.negative_400})
+          baseStyles.push({
+            color: select(t.name, {
+              light: t.palette.negative_500,
+              dim: t.palette.negative_950,
+              dark: t.palette.negative_900,
+            }),
+          })
         } else {
-          baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
-        }
-      } else if (variant === 'ghost') {
-        if (!disabled) {
-          baseStyles.push({color: t.palette.negative_400})
-        } else {
-          baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
+          baseStyles.push({
+            color: select(t.name, {
+              light: t.palette.negative_500,
+              dim: t.palette.negative_700,
+              dark: t.palette.negative_700,
+            }),
+            opacity: 0.5,
+          })
         }
       }
     } else {
-      if (!disabled) {
-        baseStyles.push({color: t.palette.white})
-      } else {
-        baseStyles.push({color: t.palette.white, opacity: 0.5})
+      /*
+       * BEGIN DEPRECATED STYLES
+       */
+      if (color === 'primary') {
+        if (variant === 'outline') {
+          if (!disabled) {
+            baseStyles.push({
+              color: t.palette.primary_600,
+            })
+          } else {
+            baseStyles.push({color: t.palette.primary_600, opacity: 0.5})
+          }
+        } else if (variant === 'ghost') {
+          if (!disabled) {
+            baseStyles.push({color: t.palette.primary_600})
+          } else {
+            baseStyles.push({color: t.palette.primary_600, opacity: 0.5})
+          }
+        }
+      } else if (color === 'secondary') {
+        if (variant === 'outline') {
+          if (!disabled) {
+            baseStyles.push({
+              color: t.palette.contrast_600,
+            })
+          } else {
+            baseStyles.push({
+              color: t.palette.contrast_300,
+            })
+          }
+        } else if (variant === 'ghost') {
+          if (!disabled) {
+            baseStyles.push({
+              color: t.palette.contrast_600,
+            })
+          } else {
+            baseStyles.push({
+              color: t.palette.contrast_300,
+            })
+          }
+        }
+      } else if (color === 'secondary_inverted') {
+        if (variant === 'outline') {
+          if (!disabled) {
+            baseStyles.push({
+              color: t.palette.contrast_600,
+            })
+          } else {
+            baseStyles.push({
+              color: t.palette.contrast_300,
+            })
+          }
+        } else if (variant === 'ghost') {
+          if (!disabled) {
+            baseStyles.push({
+              color: t.palette.contrast_600,
+            })
+          } else {
+            baseStyles.push({
+              color: t.palette.contrast_300,
+            })
+          }
+        }
+      } else if (color === 'negative') {
+        if (variant === 'outline') {
+          if (!disabled) {
+            baseStyles.push({color: t.palette.negative_400})
+          } else {
+            baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
+          }
+        } else if (variant === 'ghost') {
+          if (!disabled) {
+            baseStyles.push({color: t.palette.negative_400})
+          } else {
+            baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
+          }
+        }
+      } else if (color === 'negative_secondary') {
+        if (variant === 'outline') {
+          if (!disabled) {
+            baseStyles.push({color: t.palette.negative_400})
+          } else {
+            baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
+          }
+        } else if (variant === 'ghost') {
+          if (!disabled) {
+            baseStyles.push({color: t.palette.negative_400})
+          } else {
+            baseStyles.push({color: t.palette.negative_400, opacity: 0.5})
+          }
+        }
       }
+      /*
+       * END DEPRECATED STYLES
+       */
     }
 
     if (size === 'large') {
